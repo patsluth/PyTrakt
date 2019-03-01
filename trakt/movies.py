@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Interfaces to all of the Movie objects offered by the Trakt.tv API"""
 from collections import namedtuple
+from datetime import datetime
 from trakt.core import Alias, Comment, Genre, get, delete
 from trakt.sync import (Scrobbler, comment, rate, add_to_history,
                         remove_from_history, add_to_watchlist,
@@ -284,6 +285,10 @@ class Movie(object):
             data = yield self.ext + '/releases/{cc}'.format(cc=country_code)
             self._releases = [Release(**release) for release in data]
         yield self._releases
+        
+    @property
+    def released_at(self):
+        return datetime.strptime(self.released, "%Y-%m-%d")
 
     @get
     def get_translations(self, country_code='us'):

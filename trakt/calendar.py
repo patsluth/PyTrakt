@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Interfaces to all of the Calendar objects offered by the Trakt.tv API"""
 from pprint import pformat
-from datetime import datetime
 from trakt.core import get
 from trakt.movies import Movie
 from trakt.tv import TVEpisode
@@ -71,10 +70,6 @@ class Calendar(object):
                       'title': episode.get('episode', {}).get('title')}
             self._calendar.append(TVEpisode(show, season, ep, **e_data))
         self._calendar = sorted(self._calendar, key=lambda x: x.airs_at)
-        
-    @property
-    def released_at(self):
-      return datetime.strptime(self.released, "%Y-%m-%d")
 
 
 class PremiereCalendar(Calendar):
