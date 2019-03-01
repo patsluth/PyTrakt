@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Interfaces to all of the Calendar objects offered by the Trakt.tv API"""
 from pprint import pformat
+from datetime import datetime
 from trakt.core import get
 from trakt.movies import Movie
 from trakt.tv import TVEpisode
