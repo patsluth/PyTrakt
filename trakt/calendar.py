@@ -9,7 +9,8 @@ from trakt.utils import now, airs_date
 __author__ = 'Jon Nappi'
 __all__ = ['Calendar', 'PremiereCalendar', 'MyPremiereCalendar',
            'ShowCalendar', 'MyShowCalendar', 'SeasonCalendar',
-           'MySeasonCalendar', 'MovieCalendar', 'MyMovieCalendar']
+           'MySeasonCalendar', 'MovieCalendar', 'MyMovieCalendar',
+           'DVDCalendar', 'MyDVDCalendar']
 
 
 class Calendar(object):
