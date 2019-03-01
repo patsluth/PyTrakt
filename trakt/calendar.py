@@ -69,6 +69,10 @@ class Calendar(object):
                       'title': episode.get('episode', {}).get('title')}
             self._calendar.append(TVEpisode(show, season, ep, **e_data))
         self._calendar = sorted(self._calendar, key=lambda x: x.airs_at)
+        
+    @property
+    def released_at(self):
+      return datetime.strptime(self.released, "%Y-%m-%d")
 
 
 class PremiereCalendar(Calendar):
@@ -123,3 +127,11 @@ class MovieCalendar(Calendar):
 class MyMovieCalendar(MovieCalendar):
     """Personalized TraktTV Movie Calendar."""
     url = 'calendars/my/movies'
+    
+class DVDCalendar(MovieCalendar):
+  """TraktTV DVDCalendar"""
+  url = 'calendars/all/dvd'
+
+class MyDVDCalendar(DVDCalendar):
+  """Personalized TraktTV DVD Calendar."""
+  url = 'calendars/my/dvd'
