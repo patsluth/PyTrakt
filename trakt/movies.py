@@ -288,6 +288,9 @@ class Movie(object):
         
     @property
     def released_at(self):
+        if self.released is None:
+            return None
+            
         return datetime.strptime(self.released, "%Y-%m-%d")
 
     @get
