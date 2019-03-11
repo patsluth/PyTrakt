@@ -289,7 +289,7 @@ class Movie(object):
     @property
     def released_at(self):
         if self.released is None:
-            self._get()
+            self.get_releases(['CA', 'US'])
             if self.released is None:
                 return None
             
