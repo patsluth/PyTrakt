@@ -433,18 +433,18 @@ class Core(object):
         :return: The decoded JSON response from the Trakt API
         :raises TraktException: If any non-200 return code is encountered
         """
-        console.log('%s: %s', method, url)
+        print('%s: %s', method, url)
         HEADERS['trakt-api-key'] = CLIENT_ID
         HEADERS['Authorization'] = 'Bearer {0}'.format(OAUTH_TOKEN)
-        console.log('headers: %s', str(HEADERS))
-        console.log('method, url :: %s, %s', method, url)
+        print('headers: %s', str(HEADERS))
+        print('method, url :: %s, %s', method, url)
         if method == 'get':  # GETs need to pass data as params, not body
             response = requests.request(method, url, params=data,
                                         headers=HEADERS)
         else:
             response = requests.request(method, url, data=json.dumps(data),
                                         headers=HEADERS)
-        console.log('RESPONSE [%s] (%s): %s', method, url, str(response))
+        print('RESPONSE [%s] (%s): %s', method, url, str(response))
         if response.status_code in self.error_map:
             raise self.error_map[response.status_code]()
         elif response.status_code == 204:  # HTTP no content
