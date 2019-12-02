@@ -159,9 +159,10 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
         """Add *items* to this :class:`UserList`, where items is an iterable"""
         movies = [m.ids for m in items if isinstance(m, Movie)]
         shows = [s.ids for s in items if isinstance(s, TVShow)]
+        episodes = [e.ids for e in items if isinstance(e, TVEpisode)]
         people = [p.ids for p in items if isinstance(p, Person)]
         self._items = items
-        args = {'movies': movies, 'shows': shows, 'people': people}
+        args = {'movies': movies, 'shows': shows, 'episodes': episodes, 'people': people}
         uri = 'users/{user}/lists/{id}/items'.format(user=self.creator,
                                                      id=self.trakt)
         yield uri, args
@@ -186,9 +187,10 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
         """
         movies = [m.ids for m in items if isinstance(m, Movie)]
         shows = [s.ids for s in items if isinstance(s, TVShow)]
+        episodes = [e.ids for e in items if isinstance(e, TVEpisode)]
         people = [p.ids for p in items if isinstance(p, Person)]
         self._items = items
-        args = {'movies': movies, 'shows': shows, 'people': people}
+        args = {'movies': movies, 'shows': shows, 'episodes': episodes, 'people': people}
         uri = 'users/{user}/lists/{id}/items/remove'.format(user=self.creator,
                                                             id=self.trakt)
         yield uri, args
