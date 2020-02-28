@@ -3,7 +3,7 @@
 from pprint import pformat
 from trakt.core import get
 from trakt.movies import Movie
-from trakt.tv import TVEpisode
+from trakt.tv import TVShow, TVSeason, TVEpisode
 from trakt.utils import now, airs_date
 
 __author__ = 'Jon Nappi'
@@ -14,6 +14,7 @@ __all__ = ['Calendar', 'PremiereCalendar', 'MyPremiereCalendar',
 
 
 class Calendar(object):
+
     """Base :class:`Calendar` type serves as a foundation for other Calendar
     types
     """
@@ -61,15 +62,53 @@ class Calendar(object):
     def _build(self, data):
         """Build the calendar"""
         self._calendar = []
-        for episode in data:
-            show = episode.get('show', {}).get('title')
-            season = episode.get('episode', {}).get('season')
-            ep = episode.get('episode', {}).get('number')
-            e_data = {'airs_at': airs_date(episode.get('first_aired')),
-                      'ids': episode.get('episode').get('ids'),
-                      'title': episode.get('episode', {}).get('title')}
-            self._calendar.append(TVEpisode(show, season, ep, **e_data))
-        self._calendar = sorted(self._calendar, key=lambda x: x.airs_at)
+
+        for item in data:
+            show_data = item.pop('show')
+            episode_data = {
+                **item.pop('episode'),
+                'airs_at': airs_date(item.get('first_aired'))
+            }
+
+            show = TVShow(
+                show_data.pop('title'),
+                slug="sodiafagiaugaiugh",
+                **{
+                    **show_data,
+#                    'seasons': []
+                }
+            )
+            episode = TVEpisode(
+                show.title,
+                episode_data.pop('season'),
+                episode_data.pop('number'),
+                **episode_data
+            )
+            for season in show.seasons:
+                if season.season == episode.season:
+                    show._seasons = [season]
+                    season._episodes = [episode]
+                    break
+
+            if len(show._seasons) == 1:
+                self._calendar.append(show)
+            #     print(season, season.ids, season._episodes)
+            # print(type(episode))
+            # print("\t\t", episode)
+#            return
+#            season = TVSeason(
+#                show.title,
+#                season=episode.season,
+#                slug=show.slug,
+##                **{'episodes': [episode]}
+#            )
+#            show._seasons = [season]
+            # self._calendar.append(show)
+        self._calendar = sorted(self._calendar, key=lambda x: x.seasons[0].episodes[0].airs_at)
+
+
+
+
 
 
 class PremiereCalendar(Calendar):
@@ -85,6 +124,7 @@ class MyPremiereCalendar(Calendar):
 
 
 class ShowCalendar(Calendar):
+
     """TraktTV ShowCalendar"""
     url = 'calendars/all/shows'
 
@@ -124,7 +164,7 @@ class MovieCalendar(Calendar):
 class MyMovieCalendar(MovieCalendar):
     """Personalized TraktTV Movie Calendar."""
     url = 'calendars/my/movies'
-    
+
 class DVDCalendar(MovieCalendar):
   """TraktTV DVDCalendar"""
   url = 'calendars/all/dvd'
