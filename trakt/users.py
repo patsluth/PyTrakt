@@ -5,7 +5,7 @@ from trakt.core import get, post, delete
 from trakt.movies import Movie
 from trakt.people import Person
 from trakt.tv import TVShow, TVSeason, TVEpisode
-from trakt.utils import slugify, extract_ids, unicode_safe
+from trakt.utils import slugify, extract_ids, unicode_safe, airs_date
 
 __author__ = 'Jon Nappi'
 __all__ = ['User', 'UserList', 'Request', 'follow', 'get_all_requests',
@@ -67,30 +67,6 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                                        'comment_count', 'likes', 'trakt',
                                        'slug', 'user', 'creator'])):
     """A list created by a Trakt.tv :class:`User`"""
-    
-    
-    class ListMovie(object):
-        def __init__(self, movie: Movie):
-          self.movie = movie
-        
-        
-    class ListTVShow(object):
-        def __init__(self, show: TVShow):
-          self.show = show
-      
-      
-    class ListTVSeason(object):
-        def __init__(self, show: TVShow, season: TVSeason):
-          self.show = show
-          self.season = season
-      
-      
-    class ListTVEpisode(object):
-        def __init__(self, show: TVShow, season: TVSeason, episode: TVEpisode):
-          self.show = show
-          self.season = season
-          self.episode = episode
-
 
     def __init__(self, *args, **kwargs):
         super(UserList, self).__init__()
@@ -154,33 +130,87 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
             item_data = item.pop(item_type)
             extract_ids(item_data)
             if item_type == 'movie':
-                movie = Movie(item_data['title'], item_data['year'], item_data['slug'])
-                self._items.append(self.__class__.ListMovie(movie=movie))
+                movie = Movie(item_data.pop('title'), item_data.pop('year'), item_data.pop('slug'), **item_data)
+                self._items.append(movie)
             elif item_type == 'show':
-                show=TVShow(item_data['title'], item_data['slug'])
-                self._items.append(self.__class__.ListTVShow(show=show))
+                show = TVShow(
+                    item_data.pop('title'),
+                    slug=item_data.pop('slug'),
+                    **item_data
+                )
+                seasons = show.seasons
+                show._seasons = []
+                for season in seasons:
+                    season._episodes = []
+                    show._seasons.append(season)
+                self._items.append(show)
             elif item_type == 'season':
                 show_data = item.pop('show')
                 extract_ids(show_data)
-                show=TVShow(show_data['title'], show_data['slug'])
-                season = TVSeason(
-                    show=show.title, 
-                    season=item_data['number'],
+                show = TVShow(
+                    show_data.pop('title'),
+                    slug=show_data.pop('slug'),
+                    **show_data
+                )
+                _season = TVSeason(
+                    show=show.title,
+                    season=item_data.pop('number'),
                     slug=show.slug,
                     **item_data
                 )
-                self._items.append(self.__class__.ListTVSeason(show=show, season=season))
+                for season in show.seasons:
+                    if season.trakt != _season.trakt:
+                        continue
+                    season._episodes = []
+                    show._seasons = [season]
+                    self._items.append(show)
+                    break
+                # season._episodes = []
+                # show._seasons = [season]
+                # self._items.append(show)
+
+                # extract_ids(show_data)
+                # show=TVShow(show_data['title'], show_data['slug'])
+                # season = TVSeason(
+                #     show=show.title,
+                #     season=item_data['number'],
+                #     slug=show.slug,
+                #     **item_data
+                # )
+                # self._items.append(self.__class__.ListTVSeason(show=show, season=season))
             elif item_type == 'episode':
                 show_data = item.pop('show')
                 extract_ids(show_data)
-                show=TVShow(show_data['title'], show_data['slug'])
-                show._seasons = None
+                show = TVShow(
+                    show_data.pop('title'),
+                    slug=show_data.pop('slug'),
+                    **show_data
+                )
+                episode = TVEpisode(
+                    show=show.title,
+                    season=item_data.pop('season'),
+                    slug=show.slug,
+                    **item_data
+                )
                 for season in show.seasons:
-                    if season.season != item_data['number']:
+                    if season.season != episode.season:
                         continue
-                    episode = TVEpisode(show.title, season.season, item_data['number'], show.slug)
-                    self._items.append(self.__class__.ListTVEpisode(show=show, season=season, episode=episode))
+                    season._episodes = [episode]
+                    show._seasons = [season]
+                    self._items.append(show)
                     break
+
+
+
+
+                # show=TVShow(show_data['title'], show_data['slug'])
+                # show._seasons = None
+                # for season in show.seasons:
+                #     if season.season != item_data['number']:
+                #         continue
+                #     episode = TVEpisode(show.title, season.season, item_data['number'], show.slug)
+                #     self._items.append(self.__class__.ListTVEpisode(show=show, season=season, episode=episode))
+                #     break
             elif item_type == 'person':
                 self._items.append(Person(item_data['name'],
                                           item_data['slug']))
@@ -197,10 +227,10 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
         people = [p.ids for p in items if isinstance(p, Person)]
         self._items = items
         args = {
-          'movies': movies, 
-          'shows': shows, 
-          'seasons': seasons, 
-          'episodes': episodes, 
+          'movies': movies,
+          'shows': shows,
+          'seasons': seasons,
+          'episodes': episodes,
           'people': people
         }
         uri = 'users/{user}/lists/{id}/items'.format(user=self.creator,
@@ -232,10 +262,10 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
         people = [p.ids for p in items if isinstance(p, Person)]
         self._items = items
         args = {
-          'movies': movies, 
-          'shows': shows, 
-          'seasons': seasons, 
-          'episodes': episodes, 
+          'movies': movies,
+          'shows': shows,
+          'seasons': seasons,
+          'episodes': episodes,
           'people': people
         }
         uri = 'users/{user}/lists/{id}/items/remove'.format(user=self.creator,

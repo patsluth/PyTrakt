@@ -257,6 +257,8 @@ class TVShow(object):
                         **season
                     )
                 )
+        for season in self._seasons:
+            season.slug = self.slug
         yield self._seasons
 
     @property
@@ -348,6 +350,7 @@ class TVSeason(object):
 
     def __init__(self, show, season=1, slug=None, **kwargs):
         super(TVSeason, self).__init__()
+        self.media_type = 'seasons'
         self.show = show
         self.season = season
         self.slug = slug or slugify(show)
@@ -355,6 +358,7 @@ class TVSeason(object):
         self._episodes = self._comments = self._ratings = None
         self.ext = 'shows/{id}/seasons/{season}'.format(id=self.slug,
                                                         season=season)
+
         if len(kwargs) > 0:
             self._build(kwargs)
         else:
@@ -366,7 +370,6 @@ class TVSeason(object):
         our attributes from the returned data
         """
         data = yield self.ext
-        print(self.ext, data)
         self._build(data)
 
     def _build(self, data):
@@ -381,6 +384,8 @@ class TVSeason(object):
                     setattr(self, key, val)
                 except AttributeError:
                     setattr(self, '_'+key, val)
+        if hasattr(self, 'first_aired'):
+            setattr(self, 'first_aired_date', airs_date(self.first_aired))
 
     @property
     def ids(self):
@@ -424,6 +429,8 @@ class TVSeason(object):
                 except (NotFoundException, TypeError):
                     break
                 index += 1
+        for episode in self._episodes:
+            episode.slug = self.slug
         return self._episodes
 
     @get

@@ -82,28 +82,16 @@ class Calendar(object):
                 show.title,
                 episode_data.pop('season'),
                 episode_data.pop('number'),
+                slug=show.slug,
                 **episode_data
             )
             for season in show.seasons:
-                if season.season == episode.season:
-                    show._seasons = [season]
-                    season._episodes = [episode]
-                    break
-
-            if len(show._seasons) == 1:
+                if season.season != episode.season:
+                    continue
+                season._episodes = [episode]
+                show._seasons = [season]
                 self._calendar.append(show)
-            #     print(season, season.ids, season._episodes)
-            # print(type(episode))
-            # print("\t\t", episode)
-#            return
-#            season = TVSeason(
-#                show.title,
-#                season=episode.season,
-#                slug=show.slug,
-##                **{'episodes': [episode]}
-#            )
-#            show._seasons = [season]
-            # self._calendar.append(show)
+                break
         self._calendar = sorted(self._calendar, key=lambda x: x.seasons[0].episodes[0].airs_at)
 
 
