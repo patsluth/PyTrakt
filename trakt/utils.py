@@ -3,6 +3,7 @@ import re
 import six
 import unicodedata
 from datetime import datetime
+import dateparser
 
 __author__ = 'Jon Nappi'
 __all__ = ['slugify', 'airs_date', 'now', 'timestamp', 'extract_ids',
@@ -26,14 +27,15 @@ def slugify(value):
 
 def airs_date(airs_at):
     """convert a timestamp of the form '2015-02-01T05:30:00.000-08:00Z' to a
-    python datetime object (with time zone information removed)
+    python datetime object
     """
     if airs_at is None:
         return None
-    parsed = airs_at.split('-')[:-1]
-    if len(parsed) == 2:
-        return datetime.strptime(airs_at[:-1], '%Y-%m-%dT%H:%M:%S.000')
-    return datetime.strptime('-'.join(parsed), '%Y-%m-%dT%H:%M:%S.000')
+    return dateparser.parse(airs_at)
+    # parsed = airs_at.split('-')[:-1]
+    # if len(parsed) == 2:
+    #     return datetime.strptime(airs_at[:-1], '%Y-%m-%dT%H:%M:%S.000')
+    # return datetime.strptime('-'.join(parsed), '%Y-%m-%dT%H:%M:%S.000')
 
 
 def now():

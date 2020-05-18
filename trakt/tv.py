@@ -96,6 +96,7 @@ class TVShow(object):
         self.trakt = self.tmdb = self._aliases = self._comments = None
         self._images = self._people = self._ratings = self._translations = None
         self._seasons = None
+        self._first_aired = self.airs = None
         self.title = title
         self.slug = slug or slugify(self.title)
         if len(kwargs) > 0:
@@ -114,9 +115,8 @@ class TVShow(object):
     @get
     def _get(self):
         data = yield self.ext_full
-        data['first_aired'] = airs_date(data['first_aired'])
-        data['airs'] = Airs(**data['airs'])
         self._build(data)
+        self.airs = Airs(**data['airs'])
 
     def _build(self, data):
         extract_ids(data)
@@ -260,6 +260,19 @@ class TVShow(object):
         for season in self._seasons:
             season.slug = self.slug
         yield self._seasons
+
+    @property
+    def first_aired(self):
+        if self._first_aired is None:
+            self._get()
+        return self._first_aired
+
+    @property
+    def first_aired_date(self):
+        """Python datetime object representation of the first_aired date of
+        this :class:`TVShow`
+        """
+        return airs_date(self.first_aired)
 
     @property
     @get
