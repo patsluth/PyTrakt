@@ -31,7 +31,7 @@ def airs_date(airs_at):
     """
     if airs_at is None:
         return None
-    return dateparser.parse(airs_at)
+    return dateparser.parse(airs_at, settings={'TIMEZONE': 'UTC'})
     # parsed = airs_at.split('-')[:-1]
     # if len(parsed) == 2:
     #     return datetime.strptime(airs_at[:-1], '%Y-%m-%dT%H:%M:%S.000')

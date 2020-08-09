@@ -71,24 +71,23 @@ class Calendar(object):
             }
 
             show = TVShow(
-                show_data.pop('title'),
-                slug="sodiafagiaugaiugh",
-                **{
-                    **show_data,
-#                    'seasons': []
-                }
+                title=show_data.pop('title'),
+                slug=show_data['ids']['slug'],
+                # **show_data # _get()
             )
-            episode = TVEpisode(
-                show.title,
-                episode_data.pop('season'),
-                episode_data.pop('number'),
-                slug=show.slug,
-                **episode_data
-            )
+            season_number = episode_data.pop('season')
             for season in show.seasons:
-                if season.season != episode.season:
+                if season.number != season_number:
                     continue
-                season._episodes = [episode]
+                episode = TVEpisode(
+                    trakt_season=season,
+                    number=episode_data.pop('number'),
+                    **episode_data
+                )
+                full_episode = season._episode_getter(episode.number)
+                assert(episode.trakt == full_episode.trakt)
+                full_episode.airs_at = episode.airs_at
+                season._episodes = [full_episode]
                 show._seasons = [season]
                 self._calendar.append(show)
                 break

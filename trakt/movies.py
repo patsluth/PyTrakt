@@ -94,17 +94,24 @@ class Movie(object):
             self.slug = slug or slugify(self.title)
 
         self.released = self.tmdb_id = self.imdb_id = self.duration = None
-        self.trakt_id = self.tagline = self.overview = self.runtime = None
+        self.trakt_id = self.tagline = self.overview = None
         self.updated_at = self.trailer = self.homepage = self.rating = None
         self.votes = self.language = self.available_translations = None
         self.genres = self.certification = None
         self._comments = self._images = self._aliases = self._people = None
         self._ratings = self._releases = self._translations = None
+        self._runtime = -1
 
         if len(kwargs) > 0:
             self._build(kwargs)
         else:
             self._get()
+
+    @property
+    def runtime(self) -> int:
+        if self._runtime == -1:
+            self._get()
+        return self._runtime
 
     @classmethod
     def search(cls, title, year=None):
@@ -285,14 +292,14 @@ class Movie(object):
             data = yield self.ext + '/releases/{cc}'.format(cc=country_code)
             self._releases = [Release(**release) for release in data]
         yield self._releases
-        
+
     @property
     def released_at(self):
         if self.released is None:
             self._get()
             if self.released is None:
                 return None
-            
+
         return datetime.strptime(self.released, "%Y-%m-%d")
 
     @get

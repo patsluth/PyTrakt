@@ -153,9 +153,8 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                     **show_data
                 )
                 _season = TVSeason(
-                    show=show.title,
-                    season=item_data.pop('number'),
-                    slug=show.slug,
+                    trakt_show=show,
+                    number=item_data.pop('number'),
                     **item_data
                 )
                 for season in show.seasons:
@@ -165,37 +164,26 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                     show._seasons = [season]
                     self._items.append(show)
                     break
-                # season._episodes = []
-                # show._seasons = [season]
-                # self._items.append(show)
-
-                # extract_ids(show_data)
-                # show=TVShow(show_data['title'], show_data['slug'])
-                # season = TVSeason(
-                #     show=show.title,
-                #     season=item_data['number'],
-                #     slug=show.slug,
-                #     **item_data
-                # )
-                # self._items.append(self.__class__.ListTVSeason(show=show, season=season))
             elif item_type == 'episode':
                 show_data = item.pop('show')
                 extract_ids(show_data)
                 show = TVShow(
-                    show_data.pop('title'),
+                    title=show_data.pop('title'),
                     slug=show_data.pop('slug'),
-                    **show_data
+                    # **show_data # _get()
                 )
-                episode = TVEpisode(
-                    show=show.title,
-                    season=item_data.pop('season'),
-                    slug=show.slug,
-                    **item_data
-                )
+                season_number = item_data.pop('season')
                 for season in show.seasons:
-                    if season.season != episode.season:
+                    if season.number != season_number:
                         continue
-                    season._episodes = [episode]
+                    episode = TVEpisode(
+                        trakt_season=season,
+                        number=item_data.pop('number'),
+                        **item_data
+                    )
+                    full_episode = season._episode_getter(episode.number)
+                    assert(episode.trakt == full_episode.trakt)
+                    season._episodes = [full_episode]
                     show._seasons = [season]
                     self._items.append(show)
                     break
@@ -445,8 +433,9 @@ class User(object):
                 s = show.pop('show')
                 extract_ids(s)
                 sh = TVShow(**s)
-                sh._seasons = [TVSeason(show=sh.title, **sea)
-                               for sea in show.pop('seasons')]
+                sh._seasons = None
+                # sh._seasons = [TVSeason(trakt_show=sh, **sea)
+                #                for sea in show.pop('seasons')]
                 self._show_collection.append(sh)
         yield self._show_collection
 

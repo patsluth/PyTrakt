@@ -99,6 +99,7 @@ class TVShow(object):
         self._first_aired = self.airs = None
         self.title = title
         self.slug = slug or slugify(self.title)
+        self._runtime = -1
         if len(kwargs) > 0:
             self._build(kwargs)
         else:
@@ -125,6 +126,12 @@ class TVShow(object):
                 setattr(self, '_' + key, val)
             else:
                 setattr(self, key, val)
+
+    @property
+    def runtime(self) -> int:
+        if self._runtime == -1:
+            self._get()
+        return self._runtime
 
     @property
     def ext(self):
@@ -251,14 +258,11 @@ class TVShow(object):
                 extract_ids(season)
                 self._seasons.append(
                     TVSeason(
-                        self.title,
-                        season['number'],
-                        self.slug,
+                        trakt_show=self,
+                        number=season.pop('number'),
                         **season
                     )
                 )
-        for season in self._seasons:
-            season.slug = self.slug
         yield self._seasons
 
     @property
@@ -361,21 +365,24 @@ class TVShow(object):
 class TVSeason(object):
     """Container for TV Seasons"""
 
-    def __init__(self, show, season=1, slug=None, **kwargs):
+    def __init__(self, trakt_show, number, **kwargs):
+        assert isinstance(trakt_show, TVShow)
         super(TVSeason, self).__init__()
         self.media_type = 'seasons'
-        self.show = show
-        self.season = season
-        self.slug = slug or slugify(show)
+        self.trakt_show = trakt_show
+        self.number = number
         self.trakt = self.tmdb = self.tvdb = self.tmdb = None
         self._episodes = self._comments = self._ratings = None
-        self.ext = 'shows/{id}/seasons/{season}'.format(id=self.slug,
-                                                        season=season)
+        self.ext = 'shows/{id}/seasons/{season}'.format(
+            id=self.trakt_show.slug,
+            season=self.number
+        )
 
         if len(kwargs) > 0:
             self._build(kwargs)
         else:
             self._get()
+        self.season = self.number  # Backwards compatability
 
     @get
     def _get(self):
@@ -390,7 +397,7 @@ class TVSeason(object):
         # only try to build our episodes if we got a list of episodes, not a
         # dict of season data
         if isinstance(data, list):
-            self._episodes = [TVEpisode(show=self.show, slug=self.slug, **ep) for ep in data]
+            self._episodes = [TVEpisode(trakt_season=self, **ep) for ep in data]
         else:
             for key, val in data.items():
                 try:
@@ -442,12 +449,12 @@ class TVSeason(object):
                 except (NotFoundException, TypeError):
                     break
                 index += 1
-        for episode in self._episodes:
-            episode.slug = self.slug
+        # for episode in self._episodes:
+        #     episode.slug = self.slug
         return self._episodes
 
     @get
-    def _episode_getter(self, episode):
+    def _episode_getter(self, number):
         """Recursive episode getter generator. Will attempt to get the
         speicifed episode for this season, and if the requested episode wasn't
         found, then we return :const:`None` to indicate to the `episodes`
@@ -456,10 +463,10 @@ class TVSeason(object):
         :param episode: An int corresponding to the number of the episode
             we're trying to retrieve
         """
-        episode_extension = '/episodes/{}?extended=full'.format(episode)
+        episode_extension = '/episodes/{}?extended=full'.format(number)
         try:
             data = yield (self.ext + episode_extension)
-            yield TVEpisode(show=self.show, slug=self.slug, **data)
+            yield TVEpisode(trakt_season=self, **data)
         except NotFoundException:
             yield None
 
@@ -499,13 +506,13 @@ class TVSeason(object):
         """Return this :class:`TVSeason` as a Trakt consumable API blob"""
         # I hate that this extra lookup needs to happen here, but I can't see
         # any other way of getting around not having the data on the show...
-        show_obj = TVShow(self.slug).to_json()
-        show_obj.update({'seasons': [{'number': self.season}]})
+        show_obj = self.trakt_show.to_json()
+        show_obj.update({'seasons': [{'number': self.number}]})
         return {'shows': [show_obj]}
 
     def __str__(self):
-        season_prefix = 'S0' if self.season < 10 else 'S'
-        title = ['<TVSeason>:', self.show, f'{season_prefix}{self.season}']
+        season_prefix = 'S0' if self.number < 10 else 'S'
+        title = ['<TVSeason>:', self.trakt_show.title, f'{season_prefix}{self.number}']
         title = map(str, title)
         return ' '.join(title)
 
@@ -518,13 +525,12 @@ class TVSeason(object):
 class TVEpisode(object):
     """Container for TV Episodes"""
 
-    def __init__(self, show, season, number=-1, slug=None, **kwargs):
+    def __init__(self, trakt_season, number=-1, **kwargs):
+        assert isinstance(trakt_season, TVSeason)
         super(TVEpisode, self).__init__()
         self.media_type = 'episodes'
-        self.show = show
-        self.season = season
+        self.trakt_season = trakt_season
         self.number = number
-        self.slug = slug or slugify(show)
         self.overview = self.title = self.year = self.number_abs = None
         self.first_aired = self.last_updated = None
         self.trakt = self.tmdb = self.tvdb = self.imdb = None
@@ -572,7 +578,9 @@ class TVEpisode(object):
     @property
     def ext(self):
         return 'shows/{id}/seasons/{season}/episodes/{episode}'.format(
-            id=self.slug, season=self.season, episode=self.number
+            id=self.trakt_season.trakt_show.slug,
+            season=self.trakt_season.number,
+            episode=self.number
         )
 
     @property
@@ -710,9 +718,9 @@ class TVEpisode(object):
         }
 
     def __str__(self):
-        season_prefix = 'S0' if self.season < 10 else 'S'
+        season_prefix = 'S0' if self.trakt_season.number < 10 else 'S'
         number_prefix = 'E0' if self.number < 10 else 'E'
-        title = ['<TVEpisode>:', self.show, f'{season_prefix}{self.season}{number_prefix}{self.number}', unicode_safe(self.title)]
+        title = ['<TVEpisode>:', self.trakt_season.trakt_show.title, f'{season_prefix}{self.trakt_season.number}{number_prefix}{self.number}', unicode_safe(self.title)]
         title = map(str, title)
         return ' '.join(title)
 

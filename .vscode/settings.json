@@ -1,0 +1,9 @@
+{
+	"files.exclude": {
+		"**/node_modules/**": true,
+		"**/__pycache__/**": true,
+		"**/.pytest_cache/**": true,
+		"**/venv/**": true,
+	},
+	"python.pythonPath": "./venv"
+}
