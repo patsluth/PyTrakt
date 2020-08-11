@@ -138,11 +138,12 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                     slug=item_data.pop('slug'),
                     **item_data
                 )
-                seasons = show.seasons
-                show._seasons = []
-                for season in seasons:
-                    season._episodes = []
-                    show._seasons.append(season)
+                show._get()
+                # seasons = show.seasons
+                # show._seasons = []
+                # for season in seasons:
+                #     season._episodes = []
+                #     show._seasons.append(season)
                 self._items.append(show)
             elif item_type == 'season':
                 show_data = item.pop('show')
@@ -150,19 +151,23 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                 show = TVShow(
                     show_data.pop('title'),
                     slug=show_data.pop('slug'),
-                    **show_data
+                    # **show_data
                 )
+                show._seasons = None
+                show._get()
+                # season_number = item_data.pop('number')
                 _season = TVSeason(
                     trakt_show=show,
                     number=item_data.pop('number'),
                     **item_data
                 )
                 for season in show.seasons:
-                    if season.trakt != _season.trakt:
+                    if season.number != _season.number:
                         continue
-                    season._episodes = []
-                    show._seasons = [season]
-                    self._items.append(show)
+                    assert season.trakt == _season.trakt
+                    # season._episodes = []
+                    # show._seasons = [season]
+                    self._items.append(season)
                     break
             elif item_type == 'episode':
                 show_data = item.pop('show')
@@ -172,21 +177,27 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
                     slug=show_data.pop('slug'),
                     # **show_data # _get()
                 )
+                show._seasons = None
+                show._get()
                 season_number = item_data.pop('season')
                 for season in show.seasons:
                     if season.number != season_number:
                         continue
-                    episode = TVEpisode(
+                    _episode = TVEpisode(
                         trakt_season=season,
                         number=item_data.pop('number'),
                         **item_data
                     )
-                    full_episode = season._episode_getter(episode.number)
-                    assert(episode.trakt == full_episode.trakt)
-                    season._episodes = [full_episode]
-                    show._seasons = [season]
-                    self._items.append(show)
-                    break
+                    season._episodes = None
+                    for episode in season.episodes:
+                        if episode.number != _episode.number:
+                            continue
+                    # episode = season._episode_getter(_episode.number)
+                        assert episode.trakt == _episode.trakt
+                    # season._episodes = [full_episode]
+                    # show._seasons = [season]
+                        self._items.append(episode)
+                        break
 
 
 

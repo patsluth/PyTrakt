@@ -449,8 +449,6 @@ class TVSeason(object):
                 except (NotFoundException, TypeError):
                     break
                 index += 1
-        # for episode in self._episodes:
-        #     episode.slug = self.slug
         return self._episodes
 
     @get

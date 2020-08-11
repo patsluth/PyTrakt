@@ -87,11 +87,13 @@ class Calendar(object):
                 full_episode = season._episode_getter(episode.number)
                 assert(episode.trakt == full_episode.trakt)
                 full_episode.airs_at = episode.airs_at
-                season._episodes = [full_episode]
-                show._seasons = [season]
-                self._calendar.append(show)
+                # season._episodes = [full_episode]
+                # show._seasons = [season]
+                # self._calendar.append(show)
+                self._calendar.append(full_episode)
                 break
-        self._calendar = sorted(self._calendar, key=lambda x: x.seasons[0].episodes[0].airs_at)
+        # self._calendar = sorted(self._calendar, key=lambda x: x.seasons[0].episodes[0].airs_at)
+        self._calendar = sorted(self._calendar, key=lambda x: full_episode.airs_at)
 
 
 
