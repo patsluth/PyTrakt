@@ -178,16 +178,17 @@ class Movie(object):
         """All comments (shouts and reviews) for this :class:`Movie`. Most
         recent comments returned first.
         """
-        # TODO (jnappi) Pagination
-        from trakt.users import User
-        data = yield (self.ext + '/comments')
-        self._comments = []
-        for com in data:
-            user = User(**com.get('user'))
-            self._comments.append(
-                Comment(user=user, **{k: com[k] for k in com if k != 'user'})
-            )
-        yield self._comments
+        return []
+        # # TODO (jnappi) Pagination
+        # from trakt.users import User
+        # data = yield (self.ext + '/comments')
+        # self._comments = []
+        # for com in data:
+        #     user = User(**com.get('user'))
+        #     self._comments.append(
+        #         Comment(user=user, **{k: com[k] for k in com if k != 'user'})
+        #     )
+        # yield self._comments
 
     @property
     def crew(self):

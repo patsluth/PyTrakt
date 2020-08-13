@@ -171,15 +171,16 @@ class TVShow(object):
         """All comments (shouts and reviews) for this :class:`TVShow`. Most
         recent comments returned first.
         """
-        # TODO (jnappi) Pagination
-        from .users import User
+        return []
+        # # TODO (jnappi) Pagination
+        # from .users import User
 
-        data = yield (self.ext + '/comments')
-        self._comments = []
-        for com in data:
-            user = User(**com.pop('user'))
-            self._comments.append(Comment(user=user, **com))
-        yield self._comments
+        # data = yield (self.ext + '/comments')
+        # self._comments = []
+        # for com in data:
+        #     user = User(**com.pop('user'))
+        #     self._comments.append(Comment(user=user, **com))
+        # yield self._comments
 
     @property
     def crew(self):
