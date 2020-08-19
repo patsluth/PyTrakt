@@ -102,6 +102,7 @@ class TVShow(object):
         self.title = title
         self.slug = slug or slugify(self.title)
         self._runtime = -1
+        self._status = None
         if len(kwargs) > 0:
             self._build(kwargs)
         else:
@@ -134,6 +135,12 @@ class TVShow(object):
         if self._runtime == -1:
             self._get()
         return self._runtime
+
+    @property
+    def status(self) -> str:
+        if self._status is None:
+            self._get()
+        return self._status
 
     @property
     def ext(self):
