@@ -57,7 +57,7 @@ class Calendar(object):
     @get
     def _get(self):
         data = yield self.ext
-        self._build(data or [])
+        self._build(data)
 
     def _build(self, data):
         """Build the calendar"""

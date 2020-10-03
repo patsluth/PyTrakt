@@ -516,8 +516,11 @@ class Core(object):
             raise self.error_map[response.status_code]()
         elif response.status_code == 204:  # HTTP no content
             return None
-        json_data = json.loads(response.content.decode('UTF-8', 'ignore'))
-        return json_data
+        try:
+            return json.loads(response.content.decode('UTF-8', 'ignore'))
+        except BaseException as e:
+            self.logger.error('ERROR [%s] (%s): %s', method, url, e)
+        return None
 
     @_bootstrapped
     def get(self, f):

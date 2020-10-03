@@ -122,7 +122,7 @@ class UserList(namedtuple('UserList', ['name', 'description', 'privacy',
         data = yield 'users/{user}/lists/{id}/items'.format(user=self.creator,
                                                             id=self.slug)
 
-        for item in data or []:
+        for item in data:
             # match list item type
             if 'type' not in item:
                 continue
