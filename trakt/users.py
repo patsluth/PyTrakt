@@ -302,6 +302,8 @@ class User(object):
         self._build(data)
 
     def _build(self, data):
+        if data is None:
+            return
         """Build our this :class:`User` object"""
         for key, val in data.items():
             setattr(self, key, val)
